@@ -1,48 +1,48 @@
 import { useState } from "react";
 import axios from "axios";
-import { Container, Row, Col, Table, Pagination } from "react-bootstrap";
-import SearchInput from "./components/SearchInput";
-import "./App.css";
 import { ThreeCircles } from "react-loader-spinner";
-
-const tableCols = {
-  people: ["Name", "Birthdate", "Height", "Mass", "Species", "Homeworld"],
-  films: ["Title", "Episode #", "Director", "Producer", "Release Date"],
-  starships: ["Name", "Model", "Class", "Manufacturer", "Length", "Max Speed"],
-  vehicles: ["Name", "Model", "Class", "Manufacturer", "Length", "Max Speed"],
-  species: ["Name", "Class", "Designation", "Language", "Homeworld"],
-  planets: [
-    "Name",
-    "Rotation Period",
-    "Orbital Period",
-    "Diameter",
-    "Climate",
-    "Gravity",
-  ],
-};
+import { Container, Row, Col, Table, Pagination, Alert } from "react-bootstrap";
+import SearchInput from "./components/SearchInput";
+import TableHeaders from "./components/TableHeaders";
+import "./App.css";
 
 const client = axios.create({
   baseURL: "https://swapi.dev/api/",
+  timeout: 10000,
 });
 
 const App = () => {
-  const [tableType, setTableType] = useState(tableCols.people);
+  const [tableHeader, setTableHeader] = useState(null);
+  const [tableData, setTableData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const getData = async (path) => {
-    const data = await client.get(path);
-    return data;
-  };
+  const [error, setError] = useState(false);
 
   const searchQuerySubmitHandler = async (category, queryStr) => {
-    const path = `${category}/?search=${encodeURIComponent(queryStr)}`;
-    setIsLoading(true);
-    const data = await getData(path);
-    setIsLoading(false);
-    console.log(data);
-    setTableType(tableCols[category]);
-  };
+    // update table header
+    setTableHeader(TableHeaders[category]);
 
+    // in case of request failure
+    const controller = new AbortController();
+    client.signal = controller.signal;
+
+    const path = `${category}/?search=${encodeURIComponent(queryStr)}`;
+
+    setIsLoading(true);
+    const results = await client
+      .get(path)
+      .then((resp) => {
+        setError(false);
+        return resp.data.results;
+      })
+      .catch((err) => {
+        controller.abort();
+        setError(true);
+      });
+    setIsLoading(false);
+
+    // setTableType(tableCols[category]);
+    setTableData(results);
+  };
   return (
     <>
       <main>
@@ -55,21 +55,20 @@ const App = () => {
               </header>
               <section>
                 <SearchInput onSearchQuerySubmit={searchQuerySubmitHandler} />
-                <Table striped bordered hover>
+                <Alert className={error ? "" : "hidden"} variant="danger">
+                  Uh-oh, something went wrong...
+                </Alert>
+                <Table className={error ? "hidden" : ""} striped bordered hover>
                   <thead>
-                    <tr>
-                      {tableType.map((col) => {
-                        return <th key={col}>{col}</th>;
-                      })}
-                    </tr>
+                    <tr>{tableHeader}</tr>
                   </thead>
-                  <tbody>{/* conditional rows */}</tbody>
+                  <tbody></tbody>
                 </Table>
-                <Pagination>
+                {/* <Pagination>
                   <Pagination.Prev />
                   <Pagination.Item>{1}</Pagination.Item>
                   <Pagination.Next />
-                </Pagination>
+                </Pagination> */}
               </section>
             </Col>
           </Row>
