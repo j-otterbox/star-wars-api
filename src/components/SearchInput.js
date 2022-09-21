@@ -1,22 +1,41 @@
-import React from "react";
-import { InputGroup, Form, Dropdown, DropdownButton } from "react-bootstrap";
+import { useState } from "react";
+import { InputGroup, Dropdown, DropdownButton, Form } from "react-bootstrap";
 
-class SearchInput extends React.Component {
-  render() {
-    return (
-      <InputGroup className="mb-3">
-        <DropdownButton variant="outline-secondary" title="Search in...">
-          <Dropdown.Item>People</Dropdown.Item>
-          <Dropdown.Item>Films</Dropdown.Item>
-          <Dropdown.Item>Starships</Dropdown.Item>
-          <Dropdown.Item>Vehicles</Dropdown.Item>
-          <Dropdown.Item>Species</Dropdown.Item>
-          <Dropdown.Item>Planets</Dropdown.Item>
-        </DropdownButton>
-        <Form.Control aria-label="Text input with dropdown button" />
-      </InputGroup>
-    );
-  }
-}
+const SearchInput = (props) => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const searchQuerySubmitHandler = (category) => {
+    if (searchQuery) {
+      props.onSearchQuerySubmit(category, searchQuery);
+      setSearchQuery("");
+    }
+  };
+
+  const searchChangeHandler = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  return (
+    <InputGroup className="mb-5">
+      <DropdownButton
+        variant="outline-secondary"
+        title="Search in..."
+        onSelect={searchQuerySubmitHandler}
+      >
+        <Dropdown.Item eventKey="people">People</Dropdown.Item>
+        <Dropdown.Item eventKey="films">Films</Dropdown.Item>
+        <Dropdown.Item eventKey="starships">Starships</Dropdown.Item>
+        <Dropdown.Item eventKey="vehicles">Vehicles</Dropdown.Item>
+        <Dropdown.Item eventKey="species">Species</Dropdown.Item>
+        <Dropdown.Item eventKey="planets">Planets</Dropdown.Item>
+      </DropdownButton>
+      <Form.Control
+        value={searchQuery}
+        onChange={searchChangeHandler}
+        placeholder="Enter search terms here..."
+      />
+    </InputGroup>
+  );
+};
 
 export default SearchInput;
