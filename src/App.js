@@ -1,14 +1,32 @@
-// import { useState } from "react";
+import { useState } from "react";
 import { Container, Row, Col, Table, Pagination } from "react-bootstrap";
 import SearchInput from "./components/SearchInput";
-import TableRow from "./components/TableRow";
 import "./App.css";
 
+const tableCols = {
+  people: ["Name", "Birthdate", "Height", "Mass", "Species", "Homeworld"],
+  films: ["Title", "Episode #", "Director", "Producer", "Release Date"],
+  starships: ["Name", "Model", "Class", "Manufacturer", "Length", "Max Speed"],
+  vehicles: ["Name", "Model", "Class", "Manufacturer", "Length", "Max Speed"],
+  species: ["Name", "Class", "Designation", "Language", "Homeworld"],
+  planets: [
+    "Name",
+    "Rotation Period",
+    "Orbital Period",
+    "Diameter",
+    "Climate",
+    "Gravity",
+  ],
+};
+
 const App = () => {
-  // const [tableType, setTableType] = useState("");
+  const [tableType, setTableType] = useState(tableCols.people);
 
   const searchQuerySubmitHandler = (category, searchQuery) => {
-    console.log(category, searchQuery);
+    // make the search here
+    setTableType(tableCols[category]);
+
+    // make the API call
   };
 
   return (
@@ -25,17 +43,12 @@ const App = () => {
               <Table striped bordered hover>
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Birthdate</th>
-                    <th>Height</th>
-                    <th>Mass</th>
-                    <th>Species</th>
-                    <th>Homeworld</th>
+                    {tableType.map((col) => {
+                      return <th key={col}>{col}</th>;
+                    })}
                   </tr>
                 </thead>
-                <tbody>
-                  <TableRow></TableRow>
-                </tbody>
+                <tbody>{/* conditional rows */}</tbody>
               </Table>
               <Pagination>
                 <Pagination.Prev />
