@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import { Container, Row, Col, Table, Pagination } from "react-bootstrap";
 import SearchInput from "./components/SearchInput";
 import "./App.css";
@@ -19,14 +20,25 @@ const tableCols = {
   ],
 };
 
+const client = axios.create({
+  baseURL: "https://swapi.dev/api/",
+});
+
 const App = () => {
   const [tableType, setTableType] = useState(tableCols.people);
 
-  const searchQuerySubmitHandler = (category, searchQuery) => {
-    // make the search here
-    setTableType(tableCols[category]);
+  const getData = async (path) => {
+    const data = await client.get(path);
+    return data;
+  };
 
-    // make the API call
+  const searchQuerySubmitHandler = async (category, queryStr) => {
+    const path = `${category}/?search=${encodeURIComponent(queryStr)}`;
+    const data = await getData(path);
+
+    console.log(data);
+
+    setTableType(tableCols[category]);
   };
 
   return (
