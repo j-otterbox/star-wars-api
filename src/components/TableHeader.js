@@ -61,11 +61,21 @@ const PlanetsTableHeader = () => {
   );
 };
 
-export default Headers = {
-  people: PeopleTableHeader,
-  films: FilmsTableHeader,
-  vehicles: VehiclesTableHeader,
-  starships: VehiclesTableHeader,
-  species: SpeciesTableHeader,
-  planets: PlanetsTableHeader,
+const TableHeader = (props) => {
+  switch (props.type) {
+    case "people":
+      return <PeopleTableHeader />;
+    case "films":
+      return <FilmsTableHeader />;
+    case "starships":
+    case "vehicles":
+      return <VehiclesTableHeader />;
+    case "species":
+      return <SpeciesTableHeader />;
+    case "planets":
+      return <PlanetsTableHeader />;
+    default:
+  }
 };
+
+export default TableHeader;

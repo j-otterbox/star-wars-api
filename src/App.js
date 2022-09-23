@@ -1,48 +1,45 @@
-import { useState } from "react";
-import axios from "axios";
+import React, { useState } from "react";
+// import axios from "axios";
+import SWAPIClient from "./SWAPIClient";
 import { ThreeCircles } from "react-loader-spinner";
 import { Container, Row, Col, Table, Pagination, Alert } from "react-bootstrap";
 import SearchInput from "./components/SearchInput";
-import TableHeaders from "./components/TableHeaders";
+import TableHeader from "./components/TableHeader";
+import TableRow from "./components/TableRow";
 import "./App.css";
 
-const client = axios.create({
-  baseURL: "https://swapi.dev/api/",
-  timeout: 10000,
-});
-
 const App = () => {
-  const [tableHeader, setTableHeader] = useState(null);
-  const [tableData, setTableData] = useState(null);
+  const [tableType, setTableType] = useState("people"); // for header components
+  const [tableData, setTableData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
 
   const searchQuerySubmitHandler = async (category, queryStr) => {
-    // update table header
-    setTableHeader(TableHeaders[category]);
-
-    // in case of request failure
-    const controller = new AbortController();
-    client.signal = controller.signal;
-
-    const path = `${category}/?search=${encodeURIComponent(queryStr)}`;
-
+    // trigger loading spinner while waiting for response
     setIsLoading(true);
-    const results = await client
-      .get(path)
-      .then((resp) => {
-        setError(false);
-        return resp.data.results;
-      })
+    const response = await SWAPIClient.get(category, queryStr)
+      .then((resp) => resp)
       .catch((err) => {
-        controller.abort();
         setError(true);
       });
     setIsLoading(false);
 
-    // setTableType(tableCols[category]);
-    setTableData(results);
+    // handle response
+    if (response.status === 200) {
+      // update table header
+      setTableType(category);
+
+      if (response.data.results.length > 0) {
+        setTableData(response.data.results);
+      } else {
+        console.log("no results");
+      }
+      setError(false);
+    } else {
+      setError(true);
+    }
   };
+
   return (
     <>
       <main>
@@ -60,9 +57,15 @@ const App = () => {
                 </Alert>
                 <Table className={error ? "hidden" : ""} striped bordered hover>
                   <thead>
-                    <tr>{tableHeader}</tr>
+                    <tr>
+                      <TableHeader type={tableType} />
+                    </tr>
                   </thead>
-                  <tbody></tbody>
+                  <tbody>
+                    {tableData.map((elem) => {
+                      return <TableRow type={tableType} data={elem} />;
+                    })}
+                  </tbody>
                 </Table>
                 {/* <Pagination>
                   <Pagination.Prev />
