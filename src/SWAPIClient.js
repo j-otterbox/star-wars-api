@@ -2,7 +2,7 @@ import axios from "axios";
 
 const client = axios.create({
   baseURL: "https://swapi.dev/api/",
-  timeout: 10000,
+  timeout: 1000,
 });
 
 const SWAPIClient = {
@@ -10,12 +10,7 @@ const SWAPIClient = {
 };
 
 async function get(category, queryStr) {
-  // in case of request failure, prevent repeating attempts
-  const controller = new AbortController();
-  client.signal = controller.signal;
-
   const uri = `${category}/?search=${encodeURIComponent(queryStr)}`;
-
   const response = await client
     .get(uri)
     .then(async (resp) => {
@@ -35,7 +30,6 @@ async function get(category, queryStr) {
       return resp;
     })
     .catch((err) => {
-      controller.abort();
       return err;
     });
   return response;
