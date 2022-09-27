@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ThreeCircles } from "react-loader-spinner";
 import { Container, Row, Col, Table, Pagination, Alert } from "react-bootstrap";
 import SWAPIClient from "./SWAPIClient";
+import { getCache, refreshCache, isExpired } from "./cache";
 import SearchInput from "./components/SearchInput";
 import TableHeader from "./components/TableHeader";
 import TableRow from "./components/TableRow";
@@ -16,75 +17,42 @@ const App = () => {
   const [alertVisible, setAlertVisibility] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [pageIndex, setPageIndex] = useState(1);
-  const [paginationVisible, setPaginationVisiblity] = useState(true);
+  const [paginationVisible, setPaginationVisiblity] = useState(false);
 
   useEffect(() => {
     renderCacheData();
   }, []);
 
   async function renderCacheData() {
-    let cachedData = JSON.parse(localStorage.getItem("cache"));
+    let cacheData = getCache();
 
-    console.log("on load:", cachedData);
-
-    if (!cachedData || isExpired(cachedData.expirationDate)) {
-      console.log("no cached data, create a new one");
-
+    if (!cacheData || isExpired(cacheData.expirationDate)) {
       setIsLoading(true);
-      const results = await SWAPIClient.getPage(tableType, pageIndex);
+      const response = await SWAPIClient.getPage(tableType, pageIndex);
       setIsLoading(false);
 
-      if (Array.isArray(results)) {
-        cachedData = {
-          results,
-          expirationDate: getExpirationDate(),
-        };
-        localStorage.setItem("cache", JSON.stringify(cachedData));
-        renderDefaultTable(cachedData.results);
+      if (Array.isArray(response)) {
+        refreshCache(response);
+        renderDefaultTable(response);
+        setPaginationVisiblity(true);
       } else {
-        renderErrorAlert();
+        renderErrorAlert(response);
       }
     } else {
-      renderDefaultTable(cachedData.results);
+      renderDefaultTable(cacheData.results);
     }
   }
 
-  function isExpired(expirationDate) {
-    // console.log("checking expiration", date);
-
-    //console.log(today, date);
-
-    // const today = new Date(
-    //   "Thu Sep 25 2022 23:23:01 GMT-0700 (Pacific Daylight Time)"
-    // );
-
-    const today = new Date();
-
-    const expiryDate = new Date(expirationDate);
-
-    console.log(expiryDate);
-
-    console.log(expiryDate, today);
-
-    console.log(today < expiryDate);
-    // return ;
-  }
-
-  function getExpirationDate() {
-    const today = new Date();
-    return new Date(today.setDate(today.getDate() + 3));
-  }
-
-  function renderDefaultTable(cachedData) {
+  function renderDefaultTable(cacheData) {
     setTableType(tableType);
-    setTableData(cachedData);
+    setTableData(cacheData);
     setTableVisibility(true);
   }
 
-  function renderErrorAlert() {
+  function renderErrorAlert(errorMsg) {
     setTableVisibility(false);
     setAlertVariant("danger");
-    setAlertText("Uh-oh, something went wrong...");
+    setAlertText(errorMsg);
     setAlertVisibility(true);
   }
 
@@ -103,25 +71,26 @@ const App = () => {
 
     // trigger loading spinner while waiting for response
     setIsLoading(true);
-    const results = await SWAPIClient.get(category, queryStr);
+    const response = await SWAPIClient.get(category, queryStr);
     setIsLoading(false);
 
-    searchResultsHandler(results);
+    searchResultsHandler(response);
   };
 
-  function searchResultsHandler(results) {
-    if (Array.isArray(results)) {
-      if (results.length > 0) {
+  function searchResultsHandler(response) {
+    if (Array.isArray(response)) {
+      if (response.length > 0) {
         setAlertVisibility(false); // hide any prev alerts after successful requests
-        setTableData(results);
+        setTableData(response);
       } else {
         renderNoResultsAlert();
       }
     } else {
-      renderErrorAlert();
+      renderErrorAlert(response);
     }
   }
 
+  // ! A-OK
   async function paginationNavBtnClickHandler(btnClicked) {
     // update nav index
     let newIndex;
@@ -131,14 +100,14 @@ const App = () => {
 
     // get new page data
     setIsLoading(true);
-    const results = await SWAPIClient.getPage(tableType, newIndex);
+    const response = await SWAPIClient.getPage(tableType, newIndex);
     setIsLoading(false);
 
-    // render that data
-    if (Array.isArray(results)) {
-      setTableData(results);
+    // render the response
+    if (Array.isArray(response)) {
+      setTableData(response);
     } else {
-      renderErrorAlert();
+      renderErrorAlert(response);
     }
   }
 

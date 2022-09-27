@@ -2,35 +2,34 @@ import axios from "axios";
 
 const client = axios.create({
   baseURL: "https://swapi.dev/api/",
-  timeout: 10000,
 });
 
-// !A-OK
 const SWAPIClient = {
   get,
   getPage,
 };
 
-// ! A-OK
 async function get(category, queryStr) {
-  const uri = `${category}/?search=${encodeURIComponent(queryStr)}`;
-  const results = await client
-    .get(uri)
-    .then(async (response) => {
-      let results = response.data.results;
+  const searchStr = `${category}/?search=${encodeURIComponent(queryStr)}`;
+  const response = await client
+    .get(searchStr)
+    .then(async (resp) => {
+      let results = resp.data.results;
       if (category === "people" || category === "species") {
-        results = await getAdditionalData(results);
+        results = await getAdditionalData(response);
       }
       return results;
     })
-    .catch(() => null);
-  return results;
+    .catch((err) => {
+      console.log(err);
+      return "Oops, encountered a problem while requesting data from API...";
+    });
+  return response;
 }
 
-// ! A-OK
 async function getAdditionalData(results) {
   // map returns an array of promises which are then resolved by .all()
-  return await Promise.all(
+  const response = await Promise.all(
     results.map(async (elem) => {
       if (elem.species.length > 0) {
         let speciesURI = elem.species[0];
@@ -43,35 +42,34 @@ async function getAdditionalData(results) {
       return elem;
     })
   );
+  return response;
 }
 
-// ! A-OK
-async function getName(uri) {
+async function getName(nameURI) {
   const name = await client
-    .get(uri)
-    .then((resp) => {
-      return resp.data.name;
-    })
+    .get(nameURI)
+    .then((resp) => resp.data.name)
     .catch((err) => {
-      return "Error while retrieving...";
+      console.log(err);
+      return "Error while retrieving data...";
     });
   return name;
 }
 
-// ! A-OK
 async function getPage(category, index) {
-  console.log(category, index);
-
   const response = await client
     .get(`${category}?page=${index}`)
-    .then(async (response) => {
-      let results = response.data.results;
+    .then(async (resp) => {
+      let results = resp.data.results;
       if (category === "people" || category === "species") {
         results = await getAdditionalData(results);
       }
       return results;
     })
-    .catch(() => null);
+    .catch((err) => {
+      console.log(err);
+      return "Oops, encountered a problem while requesting data from API...";
+    });
   return response;
 }
 
