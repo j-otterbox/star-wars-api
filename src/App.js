@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from "react";
-// import axios from "axios";
-import SWAPIClient from "./SWAPIClient";
 import { ThreeCircles } from "react-loader-spinner";
 import { Container, Row, Col, Table, Pagination, Alert } from "react-bootstrap";
+import SWAPIClient from "./SWAPIClient";
 import SearchInput from "./components/SearchInput";
 import TableHeader from "./components/TableHeader";
 import TableRow from "./components/TableRow";
 import "./App.css";
 
 const App = () => {
-  console.log("loading app.js");
-  const [tableType, setTableType] = useState("people"); // for header components
+  const [tableType, setTableType] = useState("people");
   const [tableData, setTableData] = useState([]);
   const [tableVisible, setTableVisibility] = useState(false);
   const [alertText, setAlertText] = useState("");
@@ -51,8 +49,25 @@ const App = () => {
     }
   }
 
-  function isExpired(date) {
-    console.log("checking expiration", date);
+  function isExpired(expirationDate) {
+    // console.log("checking expiration", date);
+
+    //console.log(today, date);
+
+    // const today = new Date(
+    //   "Thu Sep 25 2022 23:23:01 GMT-0700 (Pacific Daylight Time)"
+    // );
+
+    const today = new Date();
+
+    const expiryDate = new Date(expirationDate);
+
+    console.log(expiryDate);
+
+    console.log(expiryDate, today);
+
+    console.log(today < expiryDate);
+    // return ;
   }
 
   function getExpirationDate() {
@@ -107,35 +122,25 @@ const App = () => {
     }
   }
 
-  const prevBtnClickHandler = async () => {
-    const newIndex = pageIndex - 1;
+  async function paginationNavBtnClickHandler(btnClicked) {
+    // update nav index
+    let newIndex;
+    if (btnClicked === "next") newIndex = pageIndex + 1;
+    else if (btnClicked === "prev") newIndex = pageIndex - 1;
     setPageIndex(newIndex);
 
+    // get new page data
     setIsLoading(true);
     const results = await SWAPIClient.getPage(tableType, newIndex);
     setIsLoading(false);
 
+    // render that data
     if (Array.isArray(results)) {
       setTableData(results);
     } else {
       renderErrorAlert();
     }
-  };
-
-  const nextBtnClickHandler = async () => {
-    const newIndex = pageIndex + 1;
-    setPageIndex(newIndex);
-
-    setIsLoading(true);
-    const results = await SWAPIClient.getPage(tableType, newIndex);
-    setIsLoading(false);
-
-    if (Array.isArray(results)) {
-      setTableData(results);
-    } else {
-      renderErrorAlert();
-    }
-  };
+  }
 
   return (
     <>
@@ -181,12 +186,12 @@ const App = () => {
                 <Pagination className={paginationVisible ? "" : "hidden"}>
                   <Pagination.Prev
                     className={pageIndex > 1 ? "" : "hidden"}
-                    onClick={prevBtnClickHandler}
+                    onClick={() => paginationNavBtnClickHandler("prev")}
                   />
                   <Pagination.Item>{pageIndex}</Pagination.Item>
                   <Pagination.Next
                     className={tableData.length < 10 ? "hidden" : ""}
-                    onClick={nextBtnClickHandler}
+                    onClick={() => paginationNavBtnClickHandler("next")}
                   />
                 </Pagination>
               </section>
