@@ -2,56 +2,50 @@ import axios from "axios";
 
 const client = axios.create({
   baseURL: "https://swapi.dev/api/",
-  timeout: 1000,
+  timeout: 10000,
 });
 
+// !A-OK
 const SWAPIClient = {
   get,
+  getPage,
 };
 
+// ! A-OK
 async function get(category, queryStr) {
   const uri = `${category}/?search=${encodeURIComponent(queryStr)}`;
-  const response = await client
+  const results = await client
     .get(uri)
-    .then(async (resp) => {
+    .then(async (response) => {
+      let results = response.data.results;
       if (category === "people" || category === "species") {
-        // get name of species and homeworld from given URIs in each elem of response
-        await Promise.all(
-          resp.data.results.map(async (elem) => {
-            const { species, homeworld } = await getSpeciesAndOrHomeworld(elem);
-            elem.species = species;
-            elem.homeworld = homeworld;
-            return elem;
-          })
-        ).then((results) => {
-          resp.data.results = results; // set results prop to new array
-        });
+        results = await getAdditionalData(results);
       }
-      return resp;
+      return results;
     })
-    .catch((err) => {
-      return err;
-    });
-  return response;
+    .catch(() => null);
+  return results;
 }
 
-async function getSpeciesAndOrHomeworld(elem) {
-  const names = {
-    species: "",
-    homeworld: "",
-  };
-
-  if (elem.species.length > 0) {
-    let uri = elem.species[0];
-    names.species = await getName(uri);
-  }
-  if (elem.homeworld) {
-    let uri = elem.homeworld;
-    names.homeworld = await getName(uri);
-  }
-  return names;
+// ! A-OK
+async function getAdditionalData(results) {
+  // map returns an array of promises which are then resolved by .all()
+  return await Promise.all(
+    results.map(async (elem) => {
+      if (elem.species.length > 0) {
+        let speciesURI = elem.species[0];
+        elem.species = await getName(speciesURI);
+      }
+      if (elem.homeworld) {
+        let homeworldURI = elem.homeworld;
+        elem.homeworld = await getName(homeworldURI);
+      }
+      return elem;
+    })
+  );
 }
 
+// ! A-OK
 async function getName(uri) {
   const name = await client
     .get(uri)
@@ -59,9 +53,26 @@ async function getName(uri) {
       return resp.data.name;
     })
     .catch((err) => {
-      return "Error";
+      return "Error while retrieving...";
     });
   return name;
+}
+
+// ! A-OK
+async function getPage(category, index) {
+  console.log(category, index);
+
+  const response = await client
+    .get(`${category}?page=${index}`)
+    .then(async (response) => {
+      let results = response.data.results;
+      if (category === "people" || category === "species") {
+        results = await getAdditionalData(results);
+      }
+      return results;
+    })
+    .catch(() => null);
+  return response;
 }
 
 export default SWAPIClient;

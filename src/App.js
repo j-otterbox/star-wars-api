@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 // import axios from "axios";
 import SWAPIClient from "./SWAPIClient";
 import { ThreeCircles } from "react-loader-spinner";
@@ -9,6 +9,7 @@ import TableRow from "./components/TableRow";
 import "./App.css";
 
 const App = () => {
+  console.log("loading app.js");
   const [tableType, setTableType] = useState("people"); // for header components
   const [tableData, setTableData] = useState([]);
   const [tableVisible, setTableVisibility] = useState(false);
@@ -16,36 +17,123 @@ const App = () => {
   const [alertVariant, setAlertVariant] = useState("");
   const [alertVisible, setAlertVisibility] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [pageIndex, setPageIndex] = useState(1);
+  const [paginationVisible, setPaginationVisiblity] = useState(true);
+
+  useEffect(() => {
+    renderCacheData();
+  }, []);
+
+  async function renderCacheData() {
+    let cachedData = JSON.parse(localStorage.getItem("cache"));
+
+    console.log("on load:", cachedData);
+
+    if (!cachedData || isExpired(cachedData.expirationDate)) {
+      console.log("no cached data, create a new one");
+
+      setIsLoading(true);
+      const results = await SWAPIClient.getPage(tableType, pageIndex);
+      setIsLoading(false);
+
+      if (Array.isArray(results)) {
+        cachedData = {
+          results,
+          expirationDate: getExpirationDate(),
+        };
+        localStorage.setItem("cache", JSON.stringify(cachedData));
+        renderDefaultTable(cachedData.results);
+      } else {
+        renderErrorAlert();
+      }
+    } else {
+      renderDefaultTable(cachedData.results);
+    }
+  }
+
+  function isExpired(date) {
+    console.log("checking expiration", date);
+  }
+
+  function getExpirationDate() {
+    const today = new Date();
+    return new Date(today.setDate(today.getDate() + 3));
+  }
+
+  function renderDefaultTable(cachedData) {
+    setTableType(tableType);
+    setTableData(cachedData);
+    setTableVisibility(true);
+  }
+
+  function renderErrorAlert() {
+    setTableVisibility(false);
+    setAlertVariant("danger");
+    setAlertText("Uh-oh, something went wrong...");
+    setAlertVisibility(true);
+  }
+
+  function renderNoResultsAlert() {
+    setAlertVariant("secondary");
+    setAlertText("No Results...");
+    setAlertVisibility(true);
+  }
 
   const searchQuerySubmitHandler = async (category, queryStr) => {
     // clear previous table data when needed
     if (tableData.length > 0) setTableData([]);
+    setTableType(category);
+    setTableVisibility(true);
+    setPaginationVisiblity(false);
 
     // trigger loading spinner while waiting for response
     setIsLoading(true);
-    const response = await SWAPIClient.get(category, queryStr)
-      .then((resp) => resp)
-      .catch((err) => err);
+    const results = await SWAPIClient.get(category, queryStr);
     setIsLoading(false);
 
-    // handle response
-    if (response.status === 200) {
-      setTableType(category);
-      setTableVisibility(true);
+    searchResultsHandler(results);
+  };
 
-      if (response.data.results.length > 0) {
-        setAlertVisibility(false);
-        setTableData(response.data.results);
+  function searchResultsHandler(results) {
+    if (Array.isArray(results)) {
+      if (results.length > 0) {
+        setAlertVisibility(false); // hide any prev alerts after successful requests
+        setTableData(results);
       } else {
-        setAlertVariant("secondary");
-        setAlertText("No Results...");
-        setAlertVisibility(true);
+        renderNoResultsAlert();
       }
     } else {
-      setTableVisibility(false);
-      setAlertVariant("danger");
-      setAlertText("Uh-oh, something went wrong...");
-      setAlertVisibility(true);
+      renderErrorAlert();
+    }
+  }
+
+  const prevBtnClickHandler = async () => {
+    const newIndex = pageIndex - 1;
+    setPageIndex(newIndex);
+
+    setIsLoading(true);
+    const results = await SWAPIClient.getPage(tableType, newIndex);
+    setIsLoading(false);
+
+    if (Array.isArray(results)) {
+      setTableData(results);
+    } else {
+      renderErrorAlert();
+    }
+  };
+
+  const nextBtnClickHandler = async () => {
+    const newIndex = pageIndex + 1;
+    setPageIndex(newIndex);
+
+    setIsLoading(true);
+    const results = await SWAPIClient.getPage(tableType, newIndex);
+    setIsLoading(false);
+
+    if (Array.isArray(results)) {
+      setTableData(results);
+    } else {
+      renderErrorAlert();
     }
   };
 
@@ -74,7 +162,13 @@ const App = () => {
                   </thead>
                   <tbody>
                     {tableData.map((elem) => {
-                      return <TableRow type={tableType} data={elem} />;
+                      return (
+                        <TableRow
+                          key={elem.name || elem.title}
+                          type={tableType}
+                          data={elem}
+                        />
+                      );
                     })}
                   </tbody>
                 </Table>
@@ -84,11 +178,17 @@ const App = () => {
                 >
                   {alertText}
                 </Alert>
-                {/* <Pagination>
-                  <Pagination.Prev />
-                  <Pagination.Item>{1}</Pagination.Item>
-                  <Pagination.Next />
-                </Pagination> */}
+                <Pagination className={paginationVisible ? "" : "hidden"}>
+                  <Pagination.Prev
+                    className={pageIndex > 1 ? "" : "hidden"}
+                    onClick={prevBtnClickHandler}
+                  />
+                  <Pagination.Item>{pageIndex}</Pagination.Item>
+                  <Pagination.Next
+                    className={tableData.length < 10 ? "hidden" : ""}
+                    onClick={nextBtnClickHandler}
+                  />
+                </Pagination>
               </section>
             </Col>
           </Row>
