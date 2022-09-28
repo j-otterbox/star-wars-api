@@ -21,7 +21,7 @@ const App = () => {
 
   useEffect(() => {
     renderCacheData();
-  }, []);
+  }, []); // eslint-disable-line
 
   async function renderCacheData() {
     let cache = getCache();
