@@ -2,12 +2,12 @@ export function getCache() {
   return JSON.parse(localStorage.getItem("cache"));
 }
 
-export function refreshCache(results) {
-  const cacheData = {
-    results,
+export function refreshCache(data) {
+  const newCache = {
+    data,
     expirationDate: getExpirationDate(),
   };
-  localStorage.setItem("cache", JSON.stringify(cacheData));
+  localStorage.setItem("cache", JSON.stringify(newCache));
 }
 
 function getExpirationDate() {

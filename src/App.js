@@ -11,7 +11,7 @@ import "./App.css";
 const App = () => {
   const [tableType, setTableType] = useState("people");
   const [tableData, setTableData] = useState([]);
-  const [tableVisible, setTableVisibility] = useState(false);
+  const [tableVisible, setTableVisibility] = useState(true);
   const [alertText, setAlertText] = useState("");
   const [alertVariant, setAlertVariant] = useState("");
   const [alertVisible, setAlertVisibility] = useState(false);
@@ -24,63 +24,45 @@ const App = () => {
   }, []);
 
   async function renderCacheData() {
-    let cacheData = getCache();
+    let cache = getCache();
 
-    if (!cacheData || isExpired(cacheData.expirationDate)) {
+    if (!cache || isExpired(cache.expirationDate)) {
       setIsLoading(true);
       const response = await SWAPIClient.getPage(tableType, pageIndex);
       setIsLoading(false);
 
       if (Array.isArray(response)) {
         refreshCache(response);
-        renderDefaultTable(response);
-        setPaginationVisiblity(true);
+        cache = getCache();
       } else {
         renderErrorAlert(response);
+        return;
       }
-    } else {
-      renderDefaultTable(cacheData.results);
     }
+
+    // cache exists or has been created/refreshed
+    setTableData(cache.data);
+    setPaginationVisiblity(true);
   }
 
-  function renderDefaultTable(cacheData) {
-    setTableType(tableType);
-    setTableData(cacheData);
-    setTableVisibility(true);
-  }
-
-  function renderErrorAlert(errorMsg) {
-    setTableVisibility(false);
-    setAlertVariant("danger");
-    setAlertText(errorMsg);
-    setAlertVisibility(true);
-  }
-
-  function renderNoResultsAlert() {
-    setAlertVariant("secondary");
-    setAlertText("No Results...");
-    setAlertVisibility(true);
-  }
-
-  const searchQuerySubmitHandler = async (category, queryStr) => {
-    // clear previous table data when needed
+  async function searchQuerySubmitHandler(category, queryStr) {
+    // hide previous table entries or alerts
     if (tableData.length > 0) setTableData([]);
-    setTableType(category);
-    setTableVisibility(true);
+    setAlertVisibility(false);
     setPaginationVisiblity(false);
 
-    // trigger loading spinner while waiting for response
+    // show table header before loading data
+    setTableType(category);
+    setTableVisibility(true);
+
+    // get data
     setIsLoading(true);
     const response = await SWAPIClient.get(category, queryStr);
     setIsLoading(false);
 
-    searchResultsHandler(response);
-  };
-
-  function searchResultsHandler(response) {
+    // finally, handle response
     if (Array.isArray(response)) {
       if (response.length > 0) {
-        setAlertVisibility(false); // hide any prev alerts after successful requests
         setTableData(response);
       } else {
         renderNoResultsAlert();
@@ -90,7 +72,18 @@ const App = () => {
     }
   }
 
-  // ! A-OK
+  function renderNoResultsAlert() {
+    setAlertVariant("secondary");
+    setAlertText("No Results...");
+    setAlertVisibility(true);
+  }
+
+  function renderErrorAlert(errorMsg) {
+    setAlertVariant("danger");
+    setAlertText(errorMsg);
+    setAlertVisibility(true);
+  }
+
   async function paginationNavBtnClickHandler(btnClicked) {
     // update nav index
     let newIndex;

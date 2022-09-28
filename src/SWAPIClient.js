@@ -16,7 +16,7 @@ async function get(category, queryStr) {
     .then(async (resp) => {
       let results = resp.data.results;
       if (category === "people" || category === "species") {
-        results = await getAdditionalData(response);
+        results = await getAdditionalData(results);
       }
       return results;
     })
