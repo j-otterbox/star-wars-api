@@ -110,14 +110,15 @@ const App = () => {
         <Container>
           <Row>
             <Col>
-              <header>
+              <header className="header">
                 <h1>Star Wars API</h1>
                 <span>Built with React.js</span>
               </header>
-              <section>
+              <section className="section">
                 <SearchInput onSearchQuerySubmit={searchQuerySubmitHandler} />
                 <Table
                   className={tableVisible ? "" : "hidden"}
+                  variant="dark"
                   striped
                   bordered
                   hover

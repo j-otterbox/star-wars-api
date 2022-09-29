@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { InputGroup, Dropdown, DropdownButton, Form } from "react-bootstrap";
+import "./SearchInput.css";
 
 const SearchInput = (props) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,7 +19,7 @@ const SearchInput = (props) => {
   return (
     <InputGroup className="mb-5">
       <DropdownButton
-        variant="outline-secondary"
+        variant="outline-primary"
         title="Search in..."
         onSelect={searchQuerySubmitHandler}
       >

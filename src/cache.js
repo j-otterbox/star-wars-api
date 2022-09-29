@@ -1,5 +1,5 @@
 export function getCache() {
-  return JSON.parse(localStorage.getItem("cache"));
+  return JSON.parse(localStorage.getItem("starWarsCache"));
 }
 
 export function refreshCache(data) {
@@ -7,7 +7,7 @@ export function refreshCache(data) {
     data,
     expirationDate: getExpirationDate(),
   };
-  localStorage.setItem("cache", JSON.stringify(newCache));
+  localStorage.setItem("starWarsCache", JSON.stringify(newCache));
 }
 
 function getExpirationDate() {
