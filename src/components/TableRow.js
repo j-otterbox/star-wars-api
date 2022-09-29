@@ -5,7 +5,9 @@ const PeopleTableRow = (props) => {
       <td>{props.data.birth_year}</td>
       <td>{props.data.height} cm</td>
       <td>{props.data.mass} kg</td>
-      <td>{props.data.species}</td>
+      <td>
+        {Array.isArray(props.data.species) ? "Human" : props.data.species}
+      </td>
       <td>{props.data.homeworld}</td>
     </tr>
   );
