@@ -2,7 +2,7 @@ import "./Overlay.css";
 
 function Overlay(props) {
   return (
-    <div className={props.isLoading ? "overlay overlay-on" : "overlay"}>
+    <div className={`overlay ${props.isLoading ? "overlay-on" : ""}`}>
       {props.children}
     </div>
   );
