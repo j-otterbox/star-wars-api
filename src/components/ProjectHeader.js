@@ -1,3 +1,5 @@
+import "./ProjectHeader.css";
+
 function ProjectHeader() {
   return (
     <header className="header">
