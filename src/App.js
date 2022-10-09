@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useState } from "react";
-import { ThreeCircles } from "react-loader-spinner";
+// import { ThreeCircles } from "react-loader-spinner";
 import { Container, Row, Col, Table, Pagination, Alert } from "react-bootstrap";
 import SWAPIClient from "./SWAPIClient";
 import { getCache, refreshCache, isExpired } from "./cache";
@@ -8,6 +8,7 @@ import SearchInput from "./components/SearchInput";
 import TableHeader from "./components/TableHeader";
 import TableRow from "./components/TableRow";
 import "./App.css";
+import LoadingOverlay from "./components/LoadingOverlay";
 
 const App = () => {
   const [tableType, setTableType] = useState("people");
@@ -160,17 +161,7 @@ const App = () => {
           </Row>
         </Container>
       </main>
-      <div className={isLoading ? "overlay overlay-on" : "overlay"}>
-        <ThreeCircles
-          height="100"
-          width="100"
-          color="#2C8BCE"
-          wrapperStyle={{}}
-          wrapperClass=""
-          visible={isLoading}
-          ariaLabel="three-circles-rotating"
-        />
-      </div>
+      <LoadingOverlay isLoading={isLoading} />
     </Fragment>
   );
 };
