@@ -18,9 +18,9 @@ This is a project I created for SDMM with the React library. It was fun to build
 
 The difficult part of this project was avoiding callback hell because the data received from the API typically has properties that are also URLs nested within. The challenge then was writing the requests in a way that is clear and easy to follow. Thankfully, this can be accomplished with asynchronous JavaScript by using async/await with promises.
 
-Another concept that I got to experiment with was using portals to produce cleaner JSX and render HTML that is friendlier to screen readers by moving the overlay and loading animation from being nested deeper with the markup to being adjacent with the app root.
+In addition, to reduce the amount of API requests made, a "cache" is created when the app is loaded for the first time with the useEffect Hook. This is done with the localStorage property of the Window interface.
 
-Lastly, to reduce the amount of API requests made, a "cache" is created when the app is loaded for the first time with the useEffect Hook. This is done with the localStorage property of the Window interface.
+Lastly, another concept that I got to experiment with was using portals to produce cleaner JSX and render HTML that is friendlier to screen readers by moving the overlay and loading animation from being nested deeper with the markup to being adjacent with the app root.
 
 ## Author
 
