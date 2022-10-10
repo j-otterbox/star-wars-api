@@ -1,5 +1,4 @@
 import React, { Fragment, useEffect, useState } from "react";
-// import { ThreeCircles } from "react-loader-spinner";
 import { Container, Row, Col, Table, Pagination, Alert } from "react-bootstrap";
 import SWAPIClient from "./SWAPIClient";
 import { getCache, refreshCache, isExpired } from "./cache";
@@ -7,8 +6,8 @@ import ProjectHeader from "./components/ProjectHeader";
 import SearchInput from "./components/SearchInput";
 import TableHeader from "./components/TableHeader";
 import TableRow from "./components/TableRow";
-import "./App.css";
 import LoadingOverlay from "./components/LoadingOverlay";
+import "./App.css";
 
 const App = () => {
   const [tableType, setTableType] = useState("people");
