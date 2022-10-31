@@ -9,10 +9,10 @@ const SWAPIClient = {
   getPage,
 };
 
-async function get(category, queryStr) {
-  const searchStr = `${category}/?search=${encodeURIComponent(queryStr)}`;
+async function get(category, params) {
+  const query = `${category}/?search=${encodeURIComponent(params)}`;
   const response = await client
-    .get(searchStr)
+    .get(query)
     .then(async (resp) => {
       let results = resp.data.results;
       if (category === "people" || category === "species") {
@@ -21,7 +21,6 @@ async function get(category, queryStr) {
       return results;
     })
     .catch((err) => {
-      console.log(err);
       return "Oops, encountered a problem while requesting data from API...";
     });
   return response;
@@ -32,12 +31,12 @@ async function getAdditionalData(results) {
   const response = await Promise.all(
     results.map(async (elem) => {
       if (elem.species.length > 0) {
-        let speciesURI = elem.species[0];
-        elem.species = await getName(speciesURI);
+        let speciesUrl = elem.species[0];
+        elem.species = await getNameFromUrl(speciesUrl);
       }
       if (elem.homeworld) {
-        let homeworldURI = elem.homeworld;
-        elem.homeworld = await getName(homeworldURI);
+        let homeworldUrl = elem.homeworld;
+        elem.homeworld = await getNameFromUrl(homeworldUrl);
       }
       return elem;
     })
@@ -45,20 +44,19 @@ async function getAdditionalData(results) {
   return response;
 }
 
-async function getName(nameURI) {
+async function getNameFromUrl(url) {
   const name = await client
-    .get(nameURI)
+    .get(url)
     .then((resp) => resp.data.name)
     .catch((err) => {
-      console.log(err);
       return "Error while retrieving data...";
     });
   return name;
 }
 
-async function getPage(category, index) {
+async function getPage(category, pageIndex) {
   const response = await client
-    .get(`${category}?page=${index}`)
+    .get(`${category}?page=${pageIndex}`)
     .then(async (resp) => {
       let results = resp.data.results;
       if (category === "people" || category === "species") {
@@ -67,7 +65,6 @@ async function getPage(category, index) {
       return results;
     })
     .catch((err) => {
-      console.log(err);
       return "Oops, encountered a problem while requesting data from API...";
     });
   return response;

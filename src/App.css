@@ -21,6 +21,11 @@
   margin-top: 64px;
 }
 
+.row {
+  display: flex;
+  justify-content: center;
+}
+
 .col {
   display: flex;
   flex-direction: column;

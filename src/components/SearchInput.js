@@ -19,7 +19,7 @@ const SearchInput = (props) => {
   return (
     <InputGroup className="mb-5">
       <DropdownButton
-        variant="outline-primary"
+        variant="primary"
         title="Search in..."
         onSelect={searchQuerySubmitHandler}
       >
