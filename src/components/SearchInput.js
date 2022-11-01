@@ -4,6 +4,7 @@ import "./SearchInput.css";
 
 const SearchInput = (props) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDisabled, setIsDisabled] = useState(true);
 
   const searchQuerySubmitHandler = (category) => {
     if (searchQuery) {
@@ -12,16 +13,13 @@ const SearchInput = (props) => {
     }
   };
 
-  const searchChangeHandler = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
   return (
     <InputGroup className="mb-5">
       <DropdownButton
         variant="primary"
         title="Search in..."
         onSelect={searchQuerySubmitHandler}
+        disabled={isDisabled}
       >
         <Dropdown.Item eventKey="people">People</Dropdown.Item>
         <Dropdown.Item eventKey="films">Films</Dropdown.Item>
@@ -32,7 +30,7 @@ const SearchInput = (props) => {
       </DropdownButton>
       <Form.Control
         value={searchQuery}
-        onChange={searchChangeHandler}
+        onChange={(e) => setSearchQuery(e.target.value)}
         placeholder="Enter search terms here..."
       />
     </InputGroup>
