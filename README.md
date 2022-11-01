@@ -10,7 +10,7 @@ Try it [here](https://aesthetic-sfogliatella-5a6c09.netlify.app/)
 
 <br>
 
-![Star Wars API Demo](https://github.com/j-otterbox/star-wars-api/blob/main/starwars-api-demo.gif "Star Wars API in use")
+![Star Wars API Demo](https://github.com/j-otterbox/star-wars-api/blob/main/swapi-demo.gif "Star Wars API in use")
 
 ## Summary
 
