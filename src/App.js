@@ -13,23 +13,29 @@ const App = () => {
   const [tableType, setTableType] = useState("people");
   const [tableData, setTableData] = useState([]);
   const [tableVisible, setTableVisibility] = useState(true);
+
   const [alertText, setAlertText] = useState("");
   const [alertVariant, setAlertVariant] = useState("");
   const [alertVisible, setAlertVisibility] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+
   const [pageIndex, setPageIndex] = useState(1);
   const [paginationVisible, setPaginationVisiblity] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [dataSource, setDataSource] = useState("cache");
+
   useEffect(() => {
-    renderCacheData();
-  }, []); // eslint-disable-line
+    if (dataSource === "cache" && tableData.length === 0) {
+      renderCacheData();
+    }
+  }, [tableData]); // eslint-disable-line
 
   async function renderCacheData() {
     let cache = getCache();
 
     if (!cache || isExpired(cache.expirationDate)) {
       setIsLoading(true);
-      const response = await SWAPIClient.getPage(tableType, pageIndex);
+      const response = await SWAPIClient.getPage("people", 1);
       setIsLoading(false);
 
       if (Array.isArray(response)) {
@@ -42,33 +48,34 @@ const App = () => {
     }
 
     // cache exists or has been created/refreshed
+    setDataSource("cache");
+    setTableType("people");
     setTableData(cache.data);
     setPaginationVisiblity(true);
+    setAlertVisibility(false);
   }
 
   async function searchQuerySubmitHandler(category, queryStr) {
-    // hide previous table entries or alerts
-    if (tableData.length > 0) setTableData([]);
     setAlertVisibility(false);
     setPaginationVisiblity(false);
 
-    // show table header before loading data
-    setTableType(category);
-    setTableVisibility(true);
-
-    // get data
     setIsLoading(true);
     const response = await SWAPIClient.get(category, queryStr);
     setIsLoading(false);
 
-    // finally, handle response
+    setDataSource("api");
+    setTableType(category);
+    setTableVisibility(true);
+
     if (Array.isArray(response)) {
       if (response.length > 0) {
         setTableData(response);
       } else {
+        setTableData([]);
         renderNoResultsAlert();
       }
     } else {
+      setTableData([]);
       renderErrorAlert(response);
     }
   }
@@ -77,12 +84,14 @@ const App = () => {
     setAlertVariant("secondary");
     setAlertText("No Results...");
     setAlertVisibility(true);
+    setPaginationVisiblity(false);
   }
 
   function renderErrorAlert(errorMsg) {
     setAlertVariant("danger");
     setAlertText(errorMsg);
     setAlertVisibility(true);
+    setPaginationVisiblity(false);
   }
 
   async function paginationNavBtnClickHandler(btnClicked) {
@@ -105,6 +114,13 @@ const App = () => {
     }
   }
 
+  function onCancelBtnClick() {
+    // trigger cache data to be loaded
+    setDataSource("cache");
+    setTableData([]);
+    setPageIndex(1);
+  }
+
   return (
     <Fragment>
       <main>
@@ -113,7 +129,11 @@ const App = () => {
             <Col>
               <ProjectHeader />
               <section className="section">
-                <SearchInput onSearchQuerySubmit={searchQuerySubmitHandler} />
+                <SearchInput
+                  dataSource={dataSource}
+                  onSearchQuerySubmit={searchQuerySubmitHandler}
+                  onCancelBtnClick={onCancelBtnClick}
+                />
                 <Table
                   className={tableVisible ? "" : "hidden"}
                   variant="dark"

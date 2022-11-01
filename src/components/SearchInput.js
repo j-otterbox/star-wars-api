@@ -1,29 +1,34 @@
-import { useState, useEffect } from "react";
-import { InputGroup, Dropdown, DropdownButton, Form } from "react-bootstrap";
+import { useState } from "react";
+import {
+  InputGroup,
+  Button,
+  Dropdown,
+  DropdownButton,
+  Form,
+} from "react-bootstrap";
 import "./SearchInput.css";
 
 const SearchInput = (props) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDisabled, setIsDisabled] = useState(true);
-
-  useEffect(() => {
-    searchQuery ? setIsDisabled(false) : setIsDisabled(true);
-  }, [searchQuery]);
 
   const searchQuerySubmitHandler = (category) => {
     if (searchQuery) {
       props.onSearchQuerySubmit(category, searchQuery);
-      setSearchQuery("");
     }
   };
 
+  const cancelBtnClickHandler = () => {
+    setSearchQuery("");
+    props.onCancelBtnClick();
+  };
+
   return (
-    <InputGroup className="mb-5">
+    <InputGroup className="search-input-group mb-5">
       <DropdownButton
         variant="primary"
         title="Search in..."
         onSelect={searchQuerySubmitHandler}
-        disabled={isDisabled}
+        disabled={!searchQuery}
       >
         <Dropdown.Item eventKey="people">People</Dropdown.Item>
         <Dropdown.Item eventKey="films">Films</Dropdown.Item>
@@ -37,6 +42,13 @@ const SearchInput = (props) => {
         onChange={(e) => setSearchQuery(e.target.value)}
         placeholder="Enter search terms here..."
       />
+      <Button
+        variant="danger"
+        onClick={cancelBtnClickHandler}
+        disabled={props.dataSource === "cache"}
+      >
+        Cancel
+      </Button>
     </InputGroup>
   );
 };

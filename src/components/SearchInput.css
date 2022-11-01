@@ -1,3 +1,7 @@
+.search-input-group {
+  max-width: 700px;
+}
+
 .dropdown-toggle {
   color: #fff;
   border-color: #fff;
