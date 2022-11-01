@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { InputGroup, Dropdown, DropdownButton, Form } from "react-bootstrap";
 import "./SearchInput.css";
 
 const SearchInput = (props) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
+
+  useEffect(() => {
+    searchQuery ? setIsDisabled(false) : setIsDisabled(true);
+  }, [searchQuery]);
 
   const searchQuerySubmitHandler = (category) => {
     if (searchQuery) {
