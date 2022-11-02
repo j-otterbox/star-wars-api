@@ -45,7 +45,8 @@ const App = () => {
         refreshCache(response.data);
         cache = getCache();
       } else {
-        renderErrorAlert(response);
+        // renderErrorAlert(response);
+        renderAlert("danger", response);
         return;
       }
     }
@@ -82,29 +83,16 @@ const App = () => {
       setNextPage(response.data.next);
 
       if (response.data.results.length === 0) {
-        renderNoResultsAlert();
+        renderAlert("secondary", "No Results...");
       } else {
         setPageIndex(1);
         setPaginationVisiblity(true);
       }
     } else {
       setTableData([]);
-      renderErrorAlert(response);
+      // renderErrorAlert(response);
+      renderAlert("danger", response);
     }
-  }
-
-  function renderNoResultsAlert() {
-    setAlertVariant("secondary");
-    setAlertText("No Results...");
-    setAlertVisibility(true);
-    setPaginationVisiblity(false);
-  }
-
-  function renderErrorAlert(errorMsg) {
-    setAlertVariant("danger");
-    setAlertText(errorMsg);
-    setAlertVisibility(true);
-    setPaginationVisiblity(false);
   }
 
   async function paginationNavBtnClickHandler(btnClicked) {
@@ -133,12 +121,20 @@ const App = () => {
       setPageIndex(newIndex);
     } else {
       setTableData([]);
-      renderErrorAlert(response);
+      // renderErrorAlert(response);
+      renderAlert("danger", response);
     }
   }
 
+  function renderAlert(variant, text) {
+    setAlertVariant(variant);
+    setAlertText(text);
+    setAlertVisibility(true);
+    setPaginationVisiblity(false);
+  }
+
   function onCancelBtnClick() {
-    // trigger cache data to be loaded
+    // trigger cache data to be loaded in useEffect
     setDataSource("cache");
     setTableData([]);
   }
