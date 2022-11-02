@@ -4,6 +4,7 @@ import SWAPIClient from "./SWAPIClient";
 import { getCache, refreshCache, isExpired } from "./cache";
 import ProjectHeader from "./components/ProjectHeader";
 import SearchInput from "./components/SearchInput";
+import SearchResults from "./components/SearchResults";
 import TableHeader from "./components/TableHeader";
 import TableRow from "./components/TableRow";
 import LoadingOverlay from "./components/LoadingOverlay";
@@ -12,17 +13,19 @@ import "./App.css";
 const App = () => {
   const [tableType, setTableType] = useState("people");
   const [tableData, setTableData] = useState([]);
-  const [tableVisible, setTableVisibility] = useState(true);
 
   const [alertText, setAlertText] = useState("");
   const [alertVariant, setAlertVariant] = useState("");
   const [alertVisible, setAlertVisibility] = useState(false);
 
   const [pageIndex, setPageIndex] = useState(1);
+  const [prevPage, setPrevPage] = useState("");
+  const [nextPage, setNextPage] = useState("");
   const [paginationVisible, setPaginationVisiblity] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [dataSource, setDataSource] = useState("cache");
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
     if (dataSource === "cache" && tableData.length === 0) {
@@ -35,11 +38,11 @@ const App = () => {
 
     if (!cache || isExpired(cache.expirationDate)) {
       setIsLoading(true);
-      const response = await SWAPIClient.getPage("people", 1);
+      const response = await SWAPIClient.get("https://swapi.dev/api/people/");
       setIsLoading(false);
 
-      if (Array.isArray(response)) {
-        refreshCache(response);
+      if (response.status === 200) {
+        refreshCache(response.data);
         cache = getCache();
       } else {
         renderErrorAlert(response);
@@ -49,30 +52,40 @@ const App = () => {
 
     // cache exists or has been created/refreshed
     setDataSource("cache");
+    setCount(cache.data.count);
     setTableType("people");
-    setTableData(cache.data);
+    setTableData(cache.data.results);
+    setPrevPage(cache.data.previous);
+    setNextPage(cache.data.next);
+    setPageIndex(1);
     setPaginationVisiblity(true);
     setAlertVisibility(false);
   }
 
-  async function searchQuerySubmitHandler(category, queryStr) {
+  async function searchQuerySubmitHandler(category, searchParam) {
     setAlertVisibility(false);
-    setPaginationVisiblity(false);
 
     setIsLoading(true);
-    const response = await SWAPIClient.get(category, queryStr);
+    const response = await SWAPIClient.get("https://swapi.dev/api/", category, {
+      search: searchParam,
+    });
     setIsLoading(false);
 
+    // set these values regardless of any response properties`
     setDataSource("api");
     setTableType(category);
-    setTableVisibility(true);
 
-    if (Array.isArray(response)) {
-      if (response.length > 0) {
-        setTableData(response);
-      } else {
-        setTableData([]);
+    if (response.status === 200) {
+      setCount(response.data.count);
+      setTableData(response.data.results);
+      setPrevPage(response.data.previous);
+      setNextPage(response.data.next);
+
+      if (response.data.results.length === 0) {
         renderNoResultsAlert();
+      } else {
+        setPageIndex(1);
+        setPaginationVisiblity(true);
       }
     } else {
       setTableData([]);
@@ -95,21 +108,31 @@ const App = () => {
   }
 
   async function paginationNavBtnClickHandler(btnClicked) {
-    // update nav index
+    let url;
     let newIndex;
-    if (btnClicked === "next") newIndex = pageIndex + 1;
-    else if (btnClicked === "prev") newIndex = pageIndex - 1;
-    setPageIndex(newIndex);
+
+    if (btnClicked === "next") {
+      newIndex = pageIndex + 1;
+      url = nextPage;
+    } else if (btnClicked === "prev") {
+      newIndex = pageIndex - 1;
+      url = prevPage;
+    }
 
     // get new page data
     setIsLoading(true);
-    const response = await SWAPIClient.getPage(tableType, newIndex);
+    const response = await SWAPIClient.get(url);
     setIsLoading(false);
 
-    // render the response
-    if (Array.isArray(response)) {
-      setTableData(response);
+    setDataSource("api"); // always set regardless of response
+
+    if (response.status === 200) {
+      setTableData(response.data.results);
+      setPrevPage(response.data.previous);
+      setNextPage(response.data.next);
+      setPageIndex(newIndex);
     } else {
+      setTableData([]);
       renderErrorAlert(response);
     }
   }
@@ -118,7 +141,6 @@ const App = () => {
     // trigger cache data to be loaded
     setDataSource("cache");
     setTableData([]);
-    setPageIndex(1);
   }
 
   return (
@@ -134,13 +156,10 @@ const App = () => {
                   onSearchQuerySubmit={searchQuerySubmitHandler}
                   onCancelBtnClick={onCancelBtnClick}
                 />
-                <Table
-                  className={tableVisible ? "" : "hidden"}
-                  variant="dark"
-                  striped
-                  bordered
-                  hover
-                >
+                <SearchResults
+                  data={{ count, pageIndex, alertVariant, alertVisible }}
+                />
+                <Table variant="dark" striped bordered hover>
                   <thead>
                     <tr>
                       <TableHeader type={tableType} />
@@ -166,12 +185,12 @@ const App = () => {
                 </Alert>
                 <Pagination className={paginationVisible ? "" : "hidden"}>
                   <Pagination.Prev
-                    className={pageIndex > 1 ? "" : "hidden"}
+                    className={prevPage ? "" : "hidden"}
                     onClick={() => paginationNavBtnClickHandler("prev")}
                   />
                   <Pagination.Item>{pageIndex}</Pagination.Item>
                   <Pagination.Next
-                    className={tableData.length < 10 ? "hidden" : ""}
+                    className={nextPage ? "" : "hidden"}
                     onClick={() => paginationNavBtnClickHandler("next")}
                   />
                 </Pagination>

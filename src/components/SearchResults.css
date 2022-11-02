@@ -1,0 +1,7 @@
+.search-results__container > span {
+  display: inline-block;
+}
+
+.search-results__container > span:first-of-type {
+  margin-right: 16px;
+}

@@ -2,23 +2,42 @@ import axios from "axios";
 
 const client = axios.create({
   baseURL: "https://swapi.dev/api/",
+  timeout: 7000,
 });
 
 const SWAPIClient = {
   get,
-  getPage,
 };
 
-async function get(category, params) {
-  const query = `${category}/?search=${encodeURIComponent(params)}`;
+async function get(baseUrl, category, urlParams) {
+  let url = baseUrl;
+
+  if (urlParams) {
+    let queryString;
+
+    for (const [key, value] of Object.entries(urlParams)) {
+      if (!queryString) queryString = `${category}/?${key}=${value}`;
+      else queryString += `&${key}=${value}`;
+    }
+
+    url += queryString;
+  }
+
   const response = await client
-    .get(query)
+    .get(url)
     .then(async (resp) => {
-      let results = resp.data.results;
-      if (category === "people" || category === "species") {
-        results = await getAdditionalData(results);
+      let requiresAdditionalData;
+
+      requiresAdditionalData =
+        /(?<=\/api\/)people\//.test(url) ||
+        /(?<=\/api\/)species\//.test(url) ||
+        category === "people" ||
+        category === "species";
+
+      if (requiresAdditionalData) {
+        resp.data.results = await getAdditionalData(resp.data.results);
       }
-      return results;
+      return resp;
     })
     .catch((err) => {
       return "Oops, encountered a problem while requesting data from API...";
@@ -32,11 +51,11 @@ async function getAdditionalData(results) {
     results.map(async (elem) => {
       if (elem.species.length > 0) {
         let speciesUrl = elem.species[0];
-        elem.species = await getNameFromUrl(speciesUrl);
+        elem.species = await getName(speciesUrl);
       }
       if (elem.homeworld) {
         let homeworldUrl = elem.homeworld;
-        elem.homeworld = await getNameFromUrl(homeworldUrl);
+        elem.homeworld = await getName(homeworldUrl);
       }
       return elem;
     })
@@ -44,7 +63,7 @@ async function getAdditionalData(results) {
   return response;
 }
 
-async function getNameFromUrl(url) {
+async function getName(url) {
   const name = await client
     .get(url)
     .then((resp) => resp.data.name)
@@ -52,22 +71,6 @@ async function getNameFromUrl(url) {
       return "Error while retrieving data...";
     });
   return name;
-}
-
-async function getPage(category, pageIndex) {
-  const response = await client
-    .get(`${category}?page=${pageIndex}`)
-    .then(async (resp) => {
-      let results = resp.data.results;
-      if (category === "people" || category === "species") {
-        results = await getAdditionalData(results);
-      }
-      return results;
-    })
-    .catch((err) => {
-      return "Oops, encountered a problem while requesting data from API...";
-    });
-  return response;
 }
 
 export default SWAPIClient;
