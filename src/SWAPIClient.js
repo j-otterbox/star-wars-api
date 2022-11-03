@@ -29,8 +29,8 @@ async function get(baseUrl, category, urlParams) {
       let requiresAdditionalData;
 
       requiresAdditionalData =
-        /(?<=\/api\/)people\//.test(url) ||
-        /(?<=\/api\/)species\//.test(url) ||
+        /\/people\//.test(url) ||
+        /\/species\//.test(url) ||
         category === "people" ||
         category === "species";
 
